@@ -5351,6 +5351,20 @@ void UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc )
 	_UG_PutChar(chr,x,y,fc,bc,&gui->font);
 }
 
+void UG_ConsoleCLS( void )
+{
+  gui->console.x_pos = gui->console.x_start;
+  gui->console.y_pos = gui->console.y_start;
+  UG_FillFrame(gui->console.x_start,gui->console.y_start,gui->console.x_end,gui->console.y_end,gui->console.back_color);
+}
+
+void UG_ConsolePutChar( char c )
+{
+  static char str[2] = {0,0};
+  str[0] = c;
+  UG_ConsolePutString(str);
+}
+
 void UG_ConsolePutString( char* str )
 {
    char chr;
@@ -5361,28 +5375,29 @@ void UG_ConsolePutString( char* str )
       chr = *str;
       if ( chr == '\n' )
       {
-         gui->console.x_pos = gui->x_dim;
+         gui->console.x_pos = gui->console.x_start;
+         gui->console.y_pos += gui->font.char_height + gui->char_v_space;
          str++;
          continue;
       }
       
       cw = gui->font.widths ? gui->font.widths[chr - gui->font.start_char] : gui->font.char_width;
-      gui->console.x_pos += cw+gui->char_h_space;
-
-      if ( gui->console.x_pos+cw > gui->console.x_end )
+      if (gui->console.x_pos + cw > gui->console.x_end)
       {
          gui->console.x_pos = gui->console.x_start;
-         gui->console.y_pos += gui->font.char_height+gui->char_v_space;
+         gui->console.y_pos += gui->font.char_height + gui->char_v_space;
       }
-      if ( gui->console.y_pos+gui->font.char_height > gui->console.y_end )
-      {
-         gui->console.x_pos = gui->console.x_start;
-         gui->console.y_pos = gui->console.y_start;
-         UG_FillFrame(gui->console.x_start,gui->console.y_start,gui->console.x_end,gui->console.y_end,gui->console.back_color);
-      }
+    if (gui->console.y_pos + gui->font.char_height > gui->console.y_end)
+      UG_ConsoleCLS();
 
+    if ((gui->console.x_pos + cw <= gui->console.x_end) &&
+        (gui->console.y_pos + gui->font.char_height <= gui->console.y_end))
+    {
       UG_PutChar(chr, gui->console.x_pos, gui->console.y_pos, gui->console.fore_color, gui->console.back_color);
       str++;
+    }
+
+    gui->console.x_pos += cw + gui->char_h_space;
    }
 }
 
@@ -5402,6 +5417,16 @@ void UG_ConsoleSetForecolor( UG_COLOR c )
 void UG_ConsoleSetBackcolor( UG_COLOR c )
 {
    gui->console.back_color = c;
+}
+
+UG_COLOR UG_ConsoleGetForecolor( void )
+{
+   return gui->console.fore_color;
+}
+
+UG_COLOR UG_ConsoleGetBackcolor( void )
+{
+   return gui->console.back_color;
 }
 
 void UG_SetForecolor( UG_COLOR c )

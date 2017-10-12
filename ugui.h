@@ -913,10 +913,14 @@ void UG_DrawLine( UG_S16 x1, UG_S16 y1, UG_S16 x2, UG_S16 y2, UG_COLOR c );
 void UG_FillPoly(UG_PointPtr p, UG_U8 n, UG_U8 filled, UG_COLOR color);
 void UG_PutString( UG_S16 x, UG_S16 y, char* str );
 void UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc );
+void UG_ConsoleCLS( void );
+void UG_ConsolePutChar( char c );
 void UG_ConsolePutString( char* str );
 void UG_ConsoleSetArea( UG_S16 xs, UG_S16 ys, UG_S16 xe, UG_S16 ye );
 void UG_ConsoleSetForecolor( UG_COLOR c );
 void UG_ConsoleSetBackcolor( UG_COLOR c );
+UG_COLOR UG_ConsoleGetForecolor( void );
+UG_COLOR UG_ConsoleGetBackcolor( void );
 void UG_SetForecolor( UG_COLOR c );
 void UG_SetBackcolor( UG_COLOR c );
 UG_S16 UG_GetXDim( void );
@@ -1010,7 +1014,7 @@ UG_S8 UG_ButtonGetVSpace( UG_WINDOW* wnd, UG_U8 id );
 UG_U8 UG_ButtonGetAlignment( UG_WINDOW* wnd, UG_U8 id );
 
 /* Checkbox functions */
-UG_RESULT UG_CheckboxCreate( UG_WINDOW* wnd, UG_CHECKBOX* btn, UG_U8 id, UG_S16 xs, UG_S16 ys, UG_S16 xe, UG_S16 ye );
+UG_RESULT UG_CheckboxCreate( UG_WINDOW* wnd, UG_CHECKBOX* chb, UG_U8 id, UG_S16 xs, UG_S16 ys, UG_S16 xe, UG_S16 ye );
 UG_RESULT UG_CheckboxDelete( UG_WINDOW* wnd, UG_U8 id );
 UG_RESULT UG_CheckboxShow( UG_WINDOW* wnd, UG_U8 id );
 UG_RESULT UG_CheckboxHide( UG_WINDOW* wnd, UG_U8 id );
