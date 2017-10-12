@@ -1,4 +1,4 @@
-#include "stm32f10x.h"
+//#include "stm32f10x.h"
 #ifndef __UGUI_CONFIG_H
 #define __UGUI_CONFIG_H
 

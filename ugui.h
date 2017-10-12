@@ -17,7 +17,8 @@
 #ifndef __UGUI_H
 #define __UGUI_H
 
-#include "stm32f10x.h"
+//#include "stm32f10x.h"
+#include "stm32f3xx_hal.h" 
 //#include "system.h"
 #include "ugui_config.h"
 

@@ -47,7 +47,6 @@
 //
 //  Oct 11, 2014  V0.1  First release.
 /* -------------------------------------------------------------------------------- */
-#include "stm32f10x.h"
 #include "ugui.h"
 
 /* Static functions */
@@ -5267,7 +5266,7 @@ void UG_FillPoly(UG_PointPtr p, UG_U8 n, UG_U8 filled, UG_COLOR color)
 
                 if ((y >= y1) && (y < y2)) 
                 {
-                    polyInts[ints++] = (UG_S16) ((float) ((y - y1) * (x2 - x1))/(float) (y2 - y1) + 0.5 + x1);
+                    polyInts[ints++] = (UG_S16) ((float) ((y - y1) * (x2 - x1))/(float) (y2 - y1) + (float)0.5 + x1);
                 }
                 else 
                     if ((y == pmaxy) && (y == y2)) 
@@ -5653,10 +5652,14 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
    UG_U32 index;
    UG_COLOR color;
    void(*push_pixel)(UG_COLOR);
+   UG_S16 xd, yd;
+
+   if ((x > gui->x_dim-1) || (y > gui->y_dim-1)) 
+     return;
 
    bt = (UG_U8)chr;
 
-   #ifndef USE_FONT_8X12_CYRILLIC 
+   #if !defined(USE_FONT_8X12_CYRILLIC ) && !defined(USE_FONT_VECTOR_CYRILLIC)
    switch ( bt )
    {
       case 0xF6: bt = 0x94; break; // ö
@@ -5668,7 +5671,7 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
       case 0xB5: bt = 0xE6; break; // µ
       case 0xB0: bt = 0xF8; break; // °
    }
-   #endif 
+   #endif
    
    if (bt < font->start_char || bt > font->end_char) return;
    
@@ -5678,6 +5681,14 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
    bn >>= 3;
    if ( font->char_width % 8 ) bn++;
    actual_char_width = (font->widths ? font->widths[bt - font->start_char] : font->char_width);
+
+   xd = actual_char_width;
+   if (x + actual_char_width > gui->x_dim)
+     xd = gui->x_dim - x;
+
+   yd = font->char_height;
+   if (y + font->char_height > gui->y_dim)
+     yd = gui->y_dim - y;
 
    #ifdef USE_FONT_VECTOR_CYRILLIC
    if (font->font_type == FONT_TYPE_VECTOR_1BPP) // vector font could not use acceleration,
@@ -5700,15 +5711,15 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
    /* Is hardware acceleration available? */
    if ( gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED )
    {
-	   //(void(*)(UG_COLOR))
-      push_pixel = ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(x,y,x+actual_char_width-1,y+font->char_height-1);
+	   //((void*(*) . Keil ARM compilller like (void(*)(UG_COLOR))((void*(*)...
+      push_pixel = (void(*)(UG_COLOR))((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(x,y,x+xd-1,y+yd-1);
 	   
       if (font->font_type == FONT_TYPE_1BPP)
 	  {
 	      index = (bt - font->start_char)* font->char_height * bn;
-		  for( j=0;j<font->char_height;j++ )
+		  for( j=0;j<yd;j++ )
 		  {
-			 c=actual_char_width;
+			 c=xd;
 			 for( i=0;i<bn;i++ )
 			 {
 				b = font->p[index++];
@@ -5731,14 +5742,14 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
 	  else if (font->font_type == FONT_TYPE_8BPP)
 	  {
 		   index = (bt - font->start_char)* font->char_height * font->char_width;
-		   for( j=0;j<font->char_height;j++ )
+		   for( j=0;j<yd;j++ )
 		   {
-			  for( i=0;i<actual_char_width;i++ )
+			  for( i=0;i<xd;i++ )
 			  {
 				 b = font->p[index++];
-				 color = (((fc & 0xFF) * b + (bc & 0xFF) * (256 - b)) >> 8) & 0xFF |//Blue component
-				         (((fc & 0xFF00) * b + (bc & 0xFF00) * (256 - b)) >> 8)  & 0xFF00|//Green component
-				         (((fc & 0xFF0000) * b + (bc & 0xFF0000) * (256 - b)) >> 8) & 0xFF0000; //Red component
+				 color = ((((fc & 0xFF) * b + (bc & 0xFF) * (256 - b)) >> 8) & 0xFF) |//Blue component
+				         ((((fc & 0xFF00) * b + (bc & 0xFF00) * (256 - b)) >> 8)  & 0xFF00) |//Green component
+				         ((((fc & 0xFF0000) * b + (bc & 0xFF0000) * (256 - b)) >> 8) & 0xFF0000); //Red component
 				 push_pixel(color);
 			  }
 			  index += font->char_width - actual_char_width;
@@ -5751,10 +5762,10 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
 	   if (font->font_type == FONT_TYPE_1BPP)
 	   {
          index = (bt - font->start_char)* font->char_height * bn;
-         for( j=0;j<font->char_height;j++ )
+         for( j=0;j<yd;j++ )
          {
            xo = x;
-           c=actual_char_width;
+           c=xd;
            for( i=0;i<bn;i++ )
            {
              b = font->p[index++];
@@ -5779,15 +5790,15 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
       else if (font->font_type == FONT_TYPE_8BPP)
       {
          index = (bt - font->start_char)* font->char_height * font->char_width;
-         for( j=0;j<font->char_height;j++ )
+         for( j=0;j<yd;j++ )
          {
             xo = x;
-            for( i=0;i<actual_char_width;i++ )
+            for( i=0;i<xd;i++ )
             {
                b = font->p[index++];
-               color = (((fc & 0xFF) * b + (bc & 0xFF) * (256 - b)) >> 8) & 0xFF |//Blue component
-                       (((fc & 0xFF00) * b + (bc & 0xFF00) * (256 - b)) >> 8)  & 0xFF00|//Green component
-                       (((fc & 0xFF0000) * b + (bc & 0xFF0000) * (256 - b)) >> 8) & 0xFF0000; //Red component
+               color = ((((fc & 0xFF) * b + (bc & 0xFF) * (256 - b)) >> 8) & 0xFF) |//Blue component
+                       ((((fc & 0xFF00) * b + (bc & 0xFF00) * (256 - b)) >> 8)  & 0xFF00)|//Green component
+                       ((((fc & 0xFF0000) * b + (bc & 0xFF0000) * (256 - b)) >> 8) & 0xFF0000); //Red component
                gui->pset(xo,yo,color);
                xo++;
             }
@@ -5819,7 +5830,7 @@ void _UG_PutText(UG_TEXT* txt)
 
    if ( txt->font->p == NULL ) return;
    if ( str == NULL ) return;
-   if ( (ye - ys) < txt->font->char_height ) return;
+   if ( (ye - ys + 1) < txt->font->char_height ) return;
 
    rc=1;
    c=str;
