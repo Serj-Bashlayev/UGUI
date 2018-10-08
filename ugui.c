@@ -5372,21 +5372,22 @@ void UG_ConsolePutString( char* str )
 
    while ( *str != 0 )
    {
-      chr = *str;
+      chr = *str++;
       if ( chr == '\n' )
       {
          gui->console.x_pos = gui->console.x_start;
          gui->console.y_pos += gui->font.char_height + gui->char_v_space;
-         str++;
          continue;
       }
-      
+
       cw = gui->font.widths ? gui->font.widths[chr - gui->font.start_char] : gui->font.char_width;
+
       if (gui->console.x_pos + cw > gui->console.x_end)
       {
          gui->console.x_pos = gui->console.x_start;
          gui->console.y_pos += gui->font.char_height + gui->char_v_space;
       }
+
     if (gui->console.y_pos + gui->font.char_height > gui->console.y_end)
       UG_ConsoleCLS();
 
@@ -5394,7 +5395,6 @@ void UG_ConsolePutString( char* str )
         (gui->console.y_pos + gui->font.char_height <= gui->console.y_end))
     {
       UG_PutChar(chr, gui->console.x_pos, gui->console.y_pos, gui->console.fore_color, gui->console.back_color);
-      str++;
     }
 
     gui->console.x_pos += cw + gui->char_h_space;
