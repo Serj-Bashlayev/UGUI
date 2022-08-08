@@ -49,9 +49,11 @@ UG_S16 UG_Init( UG_GUI* g, UG_DEVICE *device )
    g->console.x_start = 4;
    g->console.y_start = 4;
    g->console.x_end = g->device->x_dim - g->console.x_start-1;
-   g->console.y_end = g->device->y_dim - g->console.x_start-1;
+   g->console.y_end = g->device->y_dim - g->console.y_start-1;
    g->console.x_pos = g->console.x_end;
    g->console.y_pos = g->console.y_end;
+   g->console.fore_color = C_WHITE;
+   g->console.back_color = C_BLACK;
 #endif
    g->char_h_space = 1;
    g->char_v_space = 1;
