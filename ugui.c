@@ -560,6 +560,20 @@ void UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc )
 }
 
 #if defined(UGUI_USE_CONSOLE)
+void UG_ConsoleCLS( void )
+{
+   gui->console.x_pos = gui->console.x_start;
+   gui->console.y_pos = gui->console.y_start;
+   UG_FillFrame(gui->console.x_start ,gui->console.y_start, gui->console.x_end, gui->console.y_end, gui->console.back_color);
+}
+
+void UG_ConsolePutChar( char c )
+{
+   static char str[2] = {0, 0};
+   str[0] = c;
+   UG_ConsolePutString(str);
+}
+
 void UG_ConsolePutString( char* str )
 {
    UG_CHAR chr;
@@ -626,6 +640,16 @@ void UG_ConsoleSetForecolor( UG_COLOR c )
 void UG_ConsoleSetBackcolor( UG_COLOR c )
 {
    gui->console.back_color = c;
+}
+
+UG_COLOR UG_ConsoleGetForecolor( void )
+{
+   return gui->console.fore_color;
+}
+
+UG_COLOR UG_ConsoleGetBackcolor( void )
+{
+   return gui->console.back_color;
 }
 #endif
 
