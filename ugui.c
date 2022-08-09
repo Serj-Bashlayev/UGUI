@@ -595,8 +595,8 @@ void UG_ConsolePutString( char* str )
       #endif
       if ( chr == '\n' )
       {
-         gui->console.x_pos = gui->device->x_dim;
-         str++;
+         gui->console.x_pos = gui->console.x_start;
+         gui->console.y_pos += gui->currentFont.char_height + gui->char_v_space;
          continue;
       }
       
@@ -604,7 +604,6 @@ void UG_ConsolePutString( char* str )
       if(cw==-1){
         continue;
       }
-      gui->console.x_pos += cw+gui->char_h_space;
 
       if ( gui->console.x_pos+cw > gui->console.x_end )
       {
@@ -618,7 +617,14 @@ void UG_ConsolePutString( char* str )
          UG_FillFrame(gui->console.x_start,gui->console.y_start,gui->console.x_end,gui->console.y_end,gui->console.back_color);
       }
 
-      _UG_PutChar(chr, gui->console.x_pos, gui->console.y_pos, gui->console.fore_color, gui->console.back_color);
+      /* prevents the case when font size is larger than the size of the console */
+      if (( gui->console.x_pos + cw <= gui->console.x_end ) &&
+          ( gui->console.y_pos + gui->currentFont.char_height <= gui->console.y_end ))
+      {
+         _UG_PutChar(chr, gui->console.x_pos, gui->console.y_pos, gui->console.fore_color, gui->console.back_color);
+      }
+
+      gui->console.x_pos += cw + gui->char_h_space;
    }
    if((gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED))
      ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
