@@ -360,6 +360,8 @@ typedef struct _UG_DEVICE UG_DEVICE;
 
 typedef void ( *PixelSetFunc )( UG_S16, UG_S16, UG_COLOR );
 typedef void ( *FlushFunc )( void );
+typedef void ( *PushPixelsFunc )( UG_U16, UG_COLOR );
+typedef PushPixelsFunc ( *DriverFillAreaFunct )( UG_S16, UG_S16, UG_S16, UG_S16 );
 
 struct _UG_DEVICE {
    UG_S16 x_dim;

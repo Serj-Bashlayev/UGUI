@@ -548,7 +548,7 @@ void UG_PutString( UG_S16 x, UG_S16 y, char* str )
       xp += cw + gui->char_h_space;
    }
    if((gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED))
-     ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
+     ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(-1, -1, -1, -1);   // -1 to indicate finish
 }
 
 void UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc )
@@ -556,7 +556,7 @@ void UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc )
     _UG_FontSelect(gui->font);
     _UG_PutChar(chr,x,y,fc,bc);
     if((gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED))
-      ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
+      ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
 }
 
 #if defined(UGUI_USE_CONSOLE)
@@ -607,7 +607,7 @@ void UG_ConsolePutString( char* str )
       _UG_PutChar(chr, gui->console.x_pos, gui->console.y_pos, gui->console.fore_color, gui->console.back_color);
    }
    if((gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED))
-     ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
+     ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
 }
 
 void UG_ConsoleSetArea( UG_S16 xs, UG_S16 ys, UG_S16 xe, UG_S16 ye )
@@ -838,7 +838,7 @@ void _UG_FontSelect( UG_FONT *font){
   if( gui->currentFont.font==font)
     return;
    gui->currentFont.font = font;                          // Save Font pointer
-   gui->currentFont.font_type = 0x7F & *font;             // Byte    0: Font_type
+   gui->currentFont.font_type = (FONT_TYPE)(0x7F & *font);// Byte    0: Font_type
    gui->currentFont.is_old_font = (0x80 & *font++)&&1;    // Byte    0: Bit 7 indicates old or new font type. 1=old font, 0=new font
    gui->currentFont.char_width = *font++;                 // Byte    1: Char width
    gui->currentFont.char_height = *font++;                // Byte    2: Char height
@@ -867,7 +867,7 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
    UG_U8 b,trans=gui->transparent_font,driver=(gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED);
    const UG_U8 * data;                              // Pointer to current char bitmap
    UG_COLOR color;
-   void(*push_pixels)(UG_U16, UG_COLOR) = NULL;
+   PushPixelsFunc push_pixels = NULL;
 
    UG_S16 actual_char_width = _UG_GetCharData(chr, &data);
    if(actual_char_width==-1)
@@ -883,7 +883,7 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
    /* Is hardware acceleration available? */
    if (driver)
    {
-     push_pixels = ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(x,y,x+actual_char_width-1,y+ gui->currentFont.char_height-1);
+     push_pixels = ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(x,y,x+actual_char_width-1,y+ gui->currentFont.char_height-1);
    }
 
    if ( gui->currentFont.font_type == FONT_TYPE_1BPP)
@@ -934,13 +934,13 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
                      UG_U16 width = (x+actual_char_width)-x0;         // Detect available pixels in the current row from current x position
                      if(x0==x || fpixels<width)                       // If pixel draw count is lower than available pixels, or drawing at start of the row, drawn as-is
                      {
-                       push_pixels = ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0+(fpixels/actual_char_width));
+                       push_pixels = ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0+(fpixels/actual_char_width));
                        push_pixels(fpixels,fc);
                        fpixels=0;
                      }
                      else                                             // If  pixel draw count is higher than available pixels, there's at least second line, drawn this row first
                      {
-                       push_pixels = ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0);
+                       push_pixels = ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0);
                        push_pixels(fpixels,fc);
                        fpixels -= width;
                        x0=x;
@@ -979,13 +979,13 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
              UG_U16 width = (x+actual_char_width)-x0;
              if(x0==x || fpixels<width)
              {
-               push_pixels = ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0+(fpixels/actual_char_width));
+               push_pixels = ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0+(fpixels/actual_char_width));
                push_pixels(fpixels,fc);
                fpixels=0;
              }
              else
              {
-               push_pixels = ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0);
+               push_pixels = ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(x0,y0,x0+width-1,y0);
                push_pixels(fpixels,fc);
                fpixels -= width;
                x0=x;
@@ -1556,7 +1556,7 @@ void UG_DrawBMP( UG_S16 xp, UG_S16 yp, UG_BMP* bmp )
       }
       else if ( gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED)
       {
-         void(*push_pixels)(UG_U16, UG_COLOR) = ((void*(*)(UG_S16, UG_S16, UG_S16, UG_S16))gui->driver[DRIVER_FILL_AREA].driver)(xp,yp,xp+bmp->width-1,yp+bmp->height-1);
+         PushPixelsFunc push_pixels = ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(xp,yp,xp+bmp->width-1,yp+bmp->height-1);
          UG_U16 *p = (UG_U16*)bmp->p;
          for(y=0;y<bmp->height;y++)
          {
