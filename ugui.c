@@ -22,6 +22,7 @@ static void _UG_WindowUpdate( UG_WINDOW* wnd );
 static UG_RESULT _UG_WindowClear( UG_WINDOW* wnd );
 static void _UG_FontSelect( UG_FONT *font);
 static UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc);
+static void _UG_ConsolePutChar( UG_CHAR c );
 static UG_S16 _UG_GetCharData(UG_CHAR encoding,  const UG_U8 **p);
 #ifdef UGUI_USE_UTF8
 static UG_U16 _UG_DecodeUTF8(char **str);
@@ -567,17 +568,17 @@ void UG_ConsoleCLS( void )
    UG_FillFrame(gui->console.x_start ,gui->console.y_start, gui->console.x_end, gui->console.y_end, gui->console.back_color);
 }
 
-void UG_ConsolePutChar( char c )
+void UG_ConsolePutChar( UG_CHAR c )
 {
-   static char str[2] = {0, 0};
-   str[0] = c;
-   UG_ConsolePutString(str);
+  _UG_FontSelect(gui->font);
+  _UG_ConsolePutChar(c);
+  if((gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED))
+    ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
 }
 
 void UG_ConsolePutString( char* str )
 {
    UG_CHAR chr;
-   UG_S16 cw;
 
    _UG_FontSelect(gui->font);
 
@@ -593,38 +594,7 @@ void UG_ConsolePutString( char* str )
       #else
       chr = *str++;
       #endif
-      if ( chr == '\n' )
-      {
-         gui->console.x_pos = gui->console.x_start;
-         gui->console.y_pos += gui->currentFont.char_height + gui->char_v_space;
-         continue;
-      }
-      
-      cw = _UG_GetCharData(chr, NULL);
-      if(cw==-1){
-        continue;
-      }
-
-      if ( gui->console.x_pos+cw > gui->console.x_end )
-      {
-         gui->console.x_pos = gui->console.x_start;
-         gui->console.y_pos +=  gui->currentFont.char_height+gui->char_v_space;
-      }
-      if ( gui->console.y_pos+ gui->currentFont.char_height > gui->console.y_end )
-      {
-         gui->console.x_pos = gui->console.x_start;
-         gui->console.y_pos = gui->console.y_start;
-         UG_FillFrame(gui->console.x_start,gui->console.y_start,gui->console.x_end,gui->console.y_end,gui->console.back_color);
-      }
-
-      /* prevents the case when font size is larger than the size of the console */
-      if (( gui->console.x_pos + cw <= gui->console.x_end ) &&
-          ( gui->console.y_pos + gui->currentFont.char_height <= gui->console.y_end ))
-      {
-         _UG_PutChar(chr, gui->console.x_pos, gui->console.y_pos, gui->console.fore_color, gui->console.back_color);
-      }
-
-      gui->console.x_pos += cw + gui->char_h_space;
+      _UG_ConsolePutChar(chr);
    }
    if((gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED))
      ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(-1,-1,-1,-1);   // -1 to indicate finish
@@ -1126,6 +1096,46 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
    #endif
    return (actual_char_width);
 }
+
+#if defined(UGUI_USE_CONSOLE)
+void _UG_ConsolePutChar( UG_CHAR c )
+{
+   UG_S16 cw;
+
+   if ( c == '\n' )
+   {
+      gui->console.x_pos = gui->console.x_start;
+      gui->console.y_pos += gui->currentFont.char_height + gui->char_v_space;
+      return;
+   }
+   
+   cw = _UG_GetCharData(c, NULL);
+   if(cw==-1){
+     return;
+   }
+
+   if ( gui->console.x_pos+cw > gui->console.x_end )
+   {
+      gui->console.x_pos = gui->console.x_start;
+      gui->console.y_pos +=  gui->currentFont.char_height+gui->char_v_space;
+   }
+   if ( gui->console.y_pos+ gui->currentFont.char_height > gui->console.y_end )
+   {
+      gui->console.x_pos = gui->console.x_start;
+      gui->console.y_pos = gui->console.y_start;
+      UG_FillFrame(gui->console.x_start,gui->console.y_start,gui->console.x_end,gui->console.y_end,gui->console.back_color);
+   }
+   
+   /* prevents the case when font size is larger than the size of the console */
+   if (( gui->console.x_pos + cw <= gui->console.x_end ) &&
+       ( gui->console.y_pos + gui->currentFont.char_height <= gui->console.y_end ))
+   {
+      _UG_PutChar(c, gui->console.x_pos, gui->console.y_pos, gui->console.fore_color, gui->console.back_color);
+   }
+   
+   gui->console.x_pos += cw + gui->char_h_space;
+}
+#endif /* UGUI_USE_CONSOLE */
 
 #ifdef UGUI_USE_TOUCH
 static void _UG_ProcessTouchData( UG_WINDOW* wnd )
