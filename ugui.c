@@ -802,6 +802,31 @@ UG_S16 _UG_GetCharData(UG_CHAR encoding,  const UG_U8 **p){
     }
   }
 
+  if (gui->currentFont.font_type == FONT_TYPE_LIC_1BPP)
+  {
+    UG_FONT_LIC *lic_font = (void *)gui->currentFont.font;
+
+    if (encoding < lic_font->first_char || encoding > lic_font->last_char) {
+       return -1;
+    }
+
+    for (t=0; t < lic_font->num_of_chars; t++)
+    {
+      if (lic_font->info[t].code == encoding)
+      { // symbol found
+        last_font =  gui->currentFont.font;                // Update cached data
+        last_encoding = encoding;
+        last_width = lic_font->info[t].width;
+        last_p = lic_font->info[t].data;
+        if(p){
+          *p=last_p;                                       // Load char bitmap address
+        }
+        return(last_width);                                // Return char width
+      }
+    }
+    return -1;                                             // -1 = char not found
+  }
+
   for(;t< gui->currentFont.number_of_offsets;t++)                         // Seek through the offsets
   {
     UG_U16 curr_offset = ptr_8to16( gui->currentFont.offsets+(t*2));    // Offsets are 16-bit, splitted in 2 byte values
@@ -869,6 +894,21 @@ void _UG_FontSelect( UG_FONT *font){
     return;
    gui->currentFont.font = font;                          // Save Font pointer
    gui->currentFont.font_type = (FONT_TYPE)(0x7F & *font);// Byte    0: Font_type
+   if ( gui->currentFont.font_type == FONT_TYPE_LIC_1BPP )
+   {
+     UG_FONT_LIC *lic_font = (void*)font;
+
+     gui->currentFont.is_old_font = 0;
+     gui->currentFont.char_width = lic_font->char_width;
+     gui->currentFont.char_height = lic_font->char_height;
+     gui->currentFont.number_of_chars = lic_font->num_of_chars;
+     gui->currentFont.number_of_offsets = NULL;
+     gui->currentFont.bytes_per_char = 0;
+     gui->currentFont.widths = NULL;
+     gui->currentFont.offsets = NULL;
+     gui->currentFont.data = (void*)lic_font->info;
+     return;
+   }
    gui->currentFont.is_old_font = (0x80 & *font++)&&1;    // Byte    0: Bit 7 indicates old or new font type. 1=old font, 0=new font
    gui->currentFont.char_width = *font++;                 // Byte    1: Char width
    gui->currentFont.char_height = *font++;                // Byte    2: Char height
@@ -895,6 +935,8 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
    UG_U16 x0=0,y0=0,i,j,k,bn,fpixels=0,bpixels=0;
    UG_S16 c;
    UG_S16 xd, yd;                                   /* printed char width, hight */
+   UG_U32 cnt = 0;
+   UG_U8 pix, old_code;
    UG_U8 b,trans=gui->transparent_font,driver=(gui->driver[DRIVER_FILL_AREA].state & DRIVER_ENABLED);
    const UG_U8 * data;                              // Pointer to current char bitmap
    UG_COLOR color;
@@ -929,17 +971,32 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
      push_pixels = ((DriverFillAreaFunct)gui->driver[DRIVER_FILL_AREA].driver)(x,y,x+xd-1,y+yd-1);
    }
 
-   if ( gui->currentFont.font_type == FONT_TYPE_1BPP)
+   if ( gui->currentFont.font_type == FONT_TYPE_1BPP || gui->currentFont.font_type == FONT_TYPE_LIC_1BPP)
    {
+     old_code = !(gui->currentFont.font_type == FONT_TYPE_LIC_1BPP);
      for( j=0;j< yd;j++ )
      {
        c=0;
-       for( i=0;i<bn;i++ )
+       for( i=0; old_code ? (i<bn) : 1 ;i++ )
        {
-         b = *data++;
-         for( k=0;(k<8) && c<xd; k++ )
+         if (old_code)
+            b = *data++;
+         for( k=0; old_code ? ((k<8) && c<xd) : (k < actual_char_width); k++ )
          {
-           if(b & 0x01 )                    // Foreground pixel detected
+           if (!old_code) {
+              if (!(cnt++ % 8))
+                 b = *data++;
+              pix = b & 0x80;
+              b <<= 1;
+              if (c >= xd)
+                 continue;
+           }
+           else {
+             pix = b & 0x01;
+             b >>= 1;
+           }
+
+           if(pix )                         // Foreground pixel detected
            {
              if(driver)
              {                              // Accelerated output
@@ -999,9 +1056,10 @@ UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc)
                gui->device->pset(x+c,y+j,bc);
              }
            }
-           b >>= 1;
            c++;
         }
+        if (!old_code)
+           break;
        }
      }
      if(driver){                                            // After finishing, ensure there're no remaining pixels left, make another pass
