@@ -456,6 +456,9 @@ static void _UG_ButtonUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
          btn->state |= BTN_STATE_PRESSED;
          obj->state |= OBJ_STATE_UPDATE;
          obj->event = OBJ_EVENT_PRESSED;
+         #ifdef BUTTON_TXT_DEPRESS
+         obj->state |=  OBJ_STATE_REDRAW;
+         #endif
       }
       /* Can we release the button? */
       else if ( btn->state & BTN_STATE_PRESSED )
@@ -463,11 +466,11 @@ static void _UG_ButtonUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
          btn->state &= ~BTN_STATE_PRESSED;
          obj->state |= OBJ_STATE_UPDATE;
          obj->event = OBJ_EVENT_RELEASED;
+         #ifdef BUTTON_TXT_DEPRESS
+         obj->state |=  OBJ_STATE_REDRAW;
+         #endif
       }
       obj->touch_state &= ~OBJ_TOUCH_STATE_CHANGED;       
-#ifdef BUTTON_TXT_DEPRESS
-      obj->state |=  OBJ_STATE_REDRAW;
-#endif
    }
    #endif
 
