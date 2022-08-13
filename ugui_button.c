@@ -516,6 +516,9 @@ static void _UG_ButtonUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
                   txt.bc = btn->abc;
                   txt.fc = btn->afc;
                }
+               #if defined BUTTON_TXT_DEPRESS
+                  o = 1;
+               #endif
             }
             if ( !(btn->style & BTN_STYLE_NO_FILL) )
                UG_FillFrame(obj->a_abs.xs+d, obj->a_abs.ys+d, obj->a_abs.xe-d, obj->a_abs.ye-d, txt.bc);
