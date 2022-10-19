@@ -22,10 +22,12 @@ static void _UG_WindowUpdate( UG_WINDOW* wnd );
 static UG_RESULT _UG_WindowClear( UG_WINDOW* wnd );
 static void _UG_FontSelect( UG_FONT *font);
 static UG_S16 _UG_PutChar( UG_CHAR chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc);
-static void _UG_ConsolePutChar( UG_CHAR c );
 static UG_S16 _UG_GetCharData(UG_CHAR encoding,  const UG_U8 **p);
 #ifdef UGUI_USE_UTF8
 static UG_U16 _UG_DecodeUTF8(char **str);
+#endif
+#if defined(UGUI_USE_CONSOLE)
+static void _UG_ConsolePutChar( UG_CHAR c );
 #endif
 
 static UG_U16 ptr_8to16(const UG_U8* p){
@@ -637,6 +639,16 @@ void UG_SetForecolor( UG_COLOR c )
 void UG_SetBackcolor( UG_COLOR c )
 {
    gui->back_color = c;
+}
+
+UG_COLOR UG_GetForecolor( void )
+{
+   return gui->fore_color;
+}
+
+UG_COLOR UG_GetBackcolor( void )
+{
+   return gui->back_color;
 }
 
 UG_S16 UG_GetXDim( void )

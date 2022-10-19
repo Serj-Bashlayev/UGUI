@@ -468,6 +468,8 @@ UG_COLOR UG_ConsoleGetBackcolor( void );
 #endif
 void UG_SetForecolor( UG_COLOR c );
 void UG_SetBackcolor( UG_COLOR c );
+UG_COLOR UG_GetForecolor( void );
+UG_COLOR UG_GetBackcolor( void );
 UG_S16 UG_GetXDim( void );
 UG_S16 UG_GetYDim( void );
 void UG_FontSetHSpace( UG_U16 s );
