@@ -16,6 +16,8 @@
 /* -------------------------------------------------------------------------------- */
 #include "ugui.h"
 
+#define swap(a, b)                                    { UG_U16 t=a; a=b; b=t; }
+
 /* Static functions */
 static UG_RESULT _UG_WindowDrawTitle( UG_WINDOW* wnd );
 static void _UG_WindowUpdate( UG_WINDOW* wnd );
