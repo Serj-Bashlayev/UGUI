@@ -11,7 +11,7 @@
   https://en.wikipedia.org/wiki/Code_page_850
 */
 
-#ifdef UGUI_USE_FONT_4X16
+#ifdef UGUI_USE_FONT_4X6
 extern UG_FONT FONT_4X6[];
 #endif
 
@@ -45,6 +45,10 @@ extern UG_FONT FONT_8X12[];
 
 #ifdef UGUI_USE_FONT_8X12_CYRILLIC
 extern UG_FONT FONT_8X12_CYRILLIC[];
+#endif
+
+#ifdef UGUI_USE_FONT_8X14
+extern UG_FONT FONT_8X14[];
 #endif
 
 #ifdef UGUI_USE_FONT_10X16

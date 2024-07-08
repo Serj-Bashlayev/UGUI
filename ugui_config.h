@@ -25,7 +25,7 @@
 // #define UGUI_USE_UTF8
 
 /* Enable needed fonts */
-#define UGUI_USE_FONT_4X16
+#define UGUI_USE_FONT_4X6
 #define UGUI_USE_FONT_5X8
 #define UGUI_USE_FONT_5X12
 #define UGUI_USE_FONT_6X8
@@ -34,6 +34,7 @@
 #define UGUI_USE_FONT_8X8
 #define UGUI_USE_FONT_8X12
 #define UGUI_USE_FONT_8X12_CYRILLIC
+#define UGUI_USE_FONT_8X14
 #define UGUI_USE_FONT_10X16
 #define UGUI_USE_FONT_12X16
 #define UGUI_USE_FONT_12X20
